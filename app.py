@@ -53,7 +53,7 @@ def login():
 
 @app.route('/login/google')
 def login_google():
-    redirect_uri = url_for('authorize', _external=True)
+    redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI', url_for('authorize', _external=True))
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
