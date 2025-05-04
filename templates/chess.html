@@ -74,40 +74,45 @@
         .logout:active, .logout:hover {
             background: #c0392b;
         }
-        #score, #timer {
+        .top-info {
             position: fixed;
-            left: 12px;
-            right: auto;
+            top: 8px;
+            left: 0;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            z-index: 20;
+            pointer-events: none;
+        }
+        #score, #timer {
+            position: static;
+            margin-left: 12px;
+            margin-bottom: 2px;
             border-radius: 8px;
             padding: 6px 12px;
             font-size: 1rem;
             background: #fff3;
-            z-index: 10;
-            width: max-content;
             min-width: 120px;
+            max-width: 95vw;
             box-sizing: border-box;
+            pointer-events: auto;
         }
-        #score { top: 12px; }
-        #timer { top: 48px; }
-        #bonus-info { top: 84px; left: 12px; font-size: 0.95rem; }
         @media (max-width: 600px) {
-            .board-container { padding: 4vw 1vw 2vw 1vw; }
-            #board { width: 96vw; height: 96vw; min-width: 180px; min-height: 180px; }
-            #score, #timer, #bonus-info {
-                position: fixed;
-                left: 8px;
-                right: auto;
-                width: 90vw;
-                min-width: 0;
-                max-width: 98vw;
-                font-size: 1rem;
-                padding: 5px 8px;
-                border-radius: 7px;
+            .top-info {
+                top: 4px;
+                left: 0;
+                width: 100vw;
+                align-items: flex-start;
             }
-            #score { top: 8px; }
-            #timer { top: 40px; }
-            #bonus-info { top: 72px; font-size: 0.95rem; }
+            #score, #timer {
+                font-size: 0.98rem;
+                padding: 5px 8px;
+                margin-left: 8px;
+                max-width: 98vw;
+            }
         }
+        #bonus-info { top: 72px !important; left: 12px; font-size: 0.95rem; }
         @keyframes fadeIn {
             0% { opacity: 0; transform: scale(0.7) translate(-50%,-50%); }
             60% { opacity: 1; transform: scale(1.10) translate(-50%,-50%); }
@@ -191,15 +196,17 @@
 </head>
 <body>
     <button class="logout" onclick="window.location.href='/logout'">Sair</button>
-    <div id="score" style="position:fixed;top:20px;left:30px;font-size:1.2rem;font-weight:bold;color:#222;background:#fff3;border-radius:8px;padding:6px 18px;z-index:10;">Pontos: ...</div>
-    <div id="bonus-info" style="position:fixed;top:60px;left:30px;font-size:0.9rem;color:#ff0000;background:#fff3;border-radius:8px;padding:4px 12px;z-index:10;">🎯 <span style="text-decoration: underline;">Vença a IA e ganhe 1000 pontos!</span></div>
+    <div class="top-info">
+        <div id="score">Pontos: ...</div>
+        <div id="timer">Aguardando...</div>
+    </div>
+    <div id="bonus-info" style="position:fixed;top:84px;left:12px;font-size:0.9rem;color:#ff0000;background:#fff3;border-radius:8px;padding:4px 12px;z-index:10;">🎯 <span style="text-decoration: underline;">Vença a IA e ganhe 1000 pontos!</span></div>
     <div id="bonus" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);min-width:240px;text-align:center;font-size:1.3rem;font-weight:bold;color:#fff;background:linear-gradient(90deg,#f7971e,#ffd200,#f7971e);border:2px solid gold;box-shadow:0 4px 16px #f7971e99,0 1px 4px #0002,0 0 16px 4px #ffd70088;border-radius:14px;padding:14px 24px;z-index:1000;display:none;animation:fadeIn 0.7s cubic-bezier(.4,2,.6,1) forwards;filter:drop-shadow(0 0 8px #ffd200cc);text-shadow:0 2px 8px #b8860b,0 0 2px #fff;letter-spacing:1px;overflow:hidden;position:fixed;">
         <span class="shine"></span>
         <span class="explosion"></span>
         <span class="shake-text">🏆 <span id="bonus-text">Bônus: +1000 pontos!</span> 🥳</span>
         <div id="confetti"></div>
     </div>
-    <div id="timer" style="position:fixed;top:20px;right:120px;font-size:1.2rem;font-weight:bold;color:#222;background:#fff3;border-radius:8px;padding:6px 18px;z-index:10;">Aguardando...</div>
     <div class="board-container">
         <div id="board"></div>
         <div class="controls">
