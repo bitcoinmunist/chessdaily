@@ -257,10 +257,8 @@
                 canMove = data.seconds_left === 0;
                 if (!canMove) {
                     board.draggable = false;
-                    timerEl.style.color = '#c0392b';
                 } else {
                     board.draggable = true;
-                    timerEl.style.color = '#222';
                 }
             });
         }
@@ -318,6 +316,14 @@
             if (game.game_over() || game.turn() !== 'b') return;
             var possibleMoves = game.moves({ verbose: true });
             if (possibleMoves.length === 0) return;
+            // Se for a primeira jogada das pretas, escolha totalmente aleatória
+            if (game.history().length === 1) {
+                var move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                game.move(move.san);
+                board.position(game.fen());
+                updateStatus();
+                return;
+            }
             var pieceValue = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
             var centerSquares = ['d4','d5','e4','e5'];
             var minorPieces = ['n','b'];
