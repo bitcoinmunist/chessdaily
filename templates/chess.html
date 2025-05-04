@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Xadrez</title>
+    <link rel="stylesheet" href="/static/chessboard-0.3.0.min.css" />
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .board-container {
+            margin-top: 40px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(66,133,244,0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+            padding: 24px 24px 16px 24px;
+        }
+        #board {
+            width: 400px;
+            margin: 0 auto;
+        }
+        .controls {
+            margin-top: 18px;
+            text-align: center;
+        }
+        .status {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            color: #333;
+        }
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .logout:hover {
+            background: #c0392b;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: scale(0.7) translate(-50%,-50%); }
+            60% { opacity: 1; transform: scale(1.10) translate(-50%,-50%); }
+            100% { opacity: 1; transform: scale(1) translate(-50%,-50%); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1) translate(-50%,-50%); }
+            to { opacity: 0; transform: scale(0.7) translate(-50%,-50%); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1) translate(-50%,-50%); }
+            50% { transform: scale(1.06) translate(-50%,-50%); }
+            100% { transform: scale(1) translate(-50%,-50%); }
+        }
+        @keyframes shine {
+            0% { left: -60%; }
+            100% { left: 120%; }
+        }
+        @keyframes explosion {
+            0% { opacity: 0.7; transform: scale(0.2); }
+            60% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0; transform: scale(1.7); }
+        }
+        @keyframes shake {
+            0%,100% { transform: translate(0,0); }
+            10%,30%,50%,70%,90% { transform: translate(-2px,1px); }
+            20%,40%,60%,80% { transform: translate(2px,-1px); }
+        }
+        #bonus.show {
+            display: block !important;
+            animation: fadeIn 0.7s cubic-bezier(.4,2,.6,1) forwards, pulse 1.2s infinite;
+        }
+        #bonus.hide {
+            animation: fadeOut 0.7s cubic-bezier(.4,2,.6,1) forwards;
+        }
+        #bonus .shine {
+            position: absolute;
+            top: 0; left: -60%;
+            width: 60%; height: 100%;
+            background: linear-gradient(120deg,rgba(255,255,255,0.0) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.0) 100%);
+            filter: blur(2px);
+            pointer-events: none;
+            animation: shine 1.5s linear infinite;
+        }
+        #bonus .explosion {
+            position: absolute;
+            left: 50%; top: 50%;
+            width: 90%; height: 90%;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff70088 0%, #ffd70000 80%);
+            transform: translate(-50%,-50%);
+            pointer-events: none;
+            z-index: 1;
+            animation: explosion 0.7s cubic-bezier(.4,2,.6,1) 1;
+        }
+        .shake-text {
+            display: inline-block;
+            animation: shake 0.7s cubic-bezier(.4,2,.6,1) 2;
+        }
+        #confetti {
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;
+        }
+        .confetti-piece, .star-piece {
+            position: absolute;
+            width: 8px; height: 14px;
+            border-radius: 2px;
+            opacity: 0.85;
+            will-change: transform;
+        }
+        .star-piece {
+            width: 14px; height: 14px;
+            background: none !important;
+            opacity: 0.95;
+        }
+        .star-shape {
+            width: 100%; height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <button class="logout" onclick="window.location.href='/logout'">Sair</button>
+    <div id="score" style="position:fixed;top:20px;left:30px;font-size:1.2rem;font-weight:bold;color:#222;background:#fff3;border-radius:8px;padding:6px 18px;z-index:10;">Pontos: ...</div>
+    <div id="bonus-info" style="position:fixed;top:60px;left:30px;font-size:0.9rem;color:#ff0000;background:#fff3;border-radius:8px;padding:4px 12px;z-index:10;">🎯 <span style="text-decoration: underline;">Vença a IA e ganhe 1000 pontos!</span></div>
+    <div id="bonus" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);min-width:240px;text-align:center;font-size:1.3rem;font-weight:bold;color:#fff;background:linear-gradient(90deg,#f7971e,#ffd200,#f7971e);border:2px solid gold;box-shadow:0 4px 16px #f7971e99,0 1px 4px #0002,0 0 16px 4px #ffd70088;border-radius:14px;padding:14px 24px;z-index:1000;display:none;animation:fadeIn 0.7s cubic-bezier(.4,2,.6,1) forwards;filter:drop-shadow(0 0 8px #ffd200cc);text-shadow:0 2px 8px #b8860b,0 0 2px #fff;letter-spacing:1px;overflow:hidden;position:fixed;">
+        <span class="shine"></span>
+        <span class="explosion"></span>
+        <span class="shake-text">🏆 <span id="bonus-text">Bônus: +1000 pontos!</span> 🥳</span>
+        <div id="confetti"></div>
+    </div>
+    <div id="timer" style="position:fixed;top:20px;right:120px;font-size:1.2rem;font-weight:bold;color:#222;background:#fff3;border-radius:8px;padding:6px 18px;z-index:10;">Aguardando...</div>
+    <div class="board-container">
+        <div id="board"></div>
+        <div class="controls">
+            <button onclick="resetGame()">Reiniciar</button>
+        </div>
+        <div class="status" id="status"></div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="/static/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css" />
+    <script src="/static/chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var board = null;
+        var game = new Chess();
+        var statusEl = document.getElementById('status');
+        var canMove = false;
+        var scoreEl = document.getElementById('score');
+        var timerEl = document.getElementById('timer');
+
+        function fetchStatus() {
+            fetch('/api/user_status').then(r => r.json()).then(data => {
+                if (data.error) return;
+                scoreEl.textContent = 'Pontos: ' + data.score;
+                updateTimer(data.seconds_left);
+                canMove = data.seconds_left === 0;
+                if (!canMove) {
+                    board.draggable = false;
+                    timerEl.style.color = '#c0392b';
+                } else {
+                    board.draggable = true;
+                    timerEl.style.color = '#222';
+                }
+            });
+        }
+        function updateTimer(seconds) {
+            if (seconds <= 0) {
+                timerEl.textContent = 'Pode jogar!';
+                return;
+            }
+            var h = Math.floor(seconds/3600);
+            var m = Math.floor((seconds%3600)/60);
+            var s = seconds%60;
+            timerEl.textContent = `Próxima jogada em: ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            setTimeout(() => { updateTimer(seconds-1); }, 1000);
+        }
+
+        function onDragStart (source, piece, position, orientation) {
+            if (game.game_over() ||
+                (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+        }
+
+        function onDrop (source, target) {
+            if (!canMove) {
+                alert('Você só pode jogar uma vez por dia! Aguarde o tempo.');
+                return 'snapback';
+            }
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // sempre promove para rainha
+            });
+            if (move === null) return 'snapback';
+            // Registrar jogada no backend
+            fetch('/api/register_move', {method:'POST'}).then(r => r.json()).then(data => {
+                if (data.ok) {
+                    fetchStatus();
+                }
+            });
+            updateStatus();
+            // IA joga com as pretas
+            window.setTimeout(makeAIMove, 400);
+        }
+
+        function makeAIMove() {
+            if (game.game_over() || game.turn() !== 'b') return;
+            var possibleMoves = game.moves({ verbose: true });
+            if (possibleMoves.length === 0) return;
+            var pieceValue = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+            var centerSquares = ['d4','d5','e4','e5'];
+            var minorPieces = ['n','b'];
+            var majorPieces = ['q','r'];
+            var moveHistory = game.history({ verbose: true });
+            function evaluateMaterial(fen) {
+                var tempGame = new Chess(fen);
+                var board = tempGame.board();
+                var score = 0;
+                for (var i = 0; i < 8; i++) {
+                    for (var j = 0; j < 8; j++) {
+                        var piece = board[i][j];
+                        if (piece) {
+                            var val = pieceValue[piece.type];
+                            score += piece.color === 'b' ? val : -val;
+                        }
+                    }
+                }
+                return score;
+            }
+            function moveScore(move) {
+                var tempGame = new Chess(game.fen());
+                tempGame.move(move.san);
+                var eval = evaluateMaterial(tempGame.fen());
+                // Bônus por desenvolver peças menores nas primeiras 10 jogadas
+                if (minorPieces.includes(move.piece) && move.from[1] === '8' && moveHistory.length < 20) {
+                    eval += 0.7;
+                }
+                // Bônus por ir para o centro
+                if (centerSquares.includes(move.to)) {
+                    eval += 0.5;
+                }
+                // Penalidade para mexer torre/rainha nas primeiras 10 jogadas
+                if (majorPieces.includes(move.piece) && moveHistory.length < 20) {
+                    eval -= 1.5;
+                }
+                // Penalidade para mover a mesma peça repetidamente
+                var lastMove = moveHistory.length > 0 ? moveHistory[moveHistory.length-1] : null;
+                if (lastMove && lastMove.to === move.from && lastMove.piece === move.piece) {
+                    eval -= 1.2;
+                }
+                // Penalidade para deixar peça valiosa atacada por peça de menor valor
+                var movedPieceValue = pieceValue[move.piece];
+                var toSquare = move.to;
+                var tempGameForAttack = new Chess(tempGame.fen());
+                tempGameForAttack.turn('w');
+                var whiteMoves = tempGameForAttack.moves({ verbose: true });
+                var attackers = whiteMoves.filter(function(m) { return m.to === toSquare; });
+                if (attackers.length > 0) {
+                    var minAttackerValue = Math.min.apply(null, attackers.map(function(m) { return pieceValue[m.piece]; }));
+                    // Só aceita troca se for igual ou vantajosa
+                    if (move.captured) {
+                        var capturedValue = pieceValue[move.captured];
+                        if (movedPieceValue > capturedValue) {
+                            eval -= (movedPieceValue - capturedValue) * 4; // penalidade forte
+                        }
+                    } else {
+                        // Se não for troca, penaliza se o atacante for de valor menor
+                        if (minAttackerValue < movedPieceValue) {
+                            eval -= (movedPieceValue - minAttackerValue) * 5; // penalidade muito forte
+                        }
+                    }
+                }
+                return eval;
+            }
+            var bestMove = null;
+            var bestEval = -Infinity;
+            possibleMoves.forEach(function(move) {
+                var score = moveScore(move);
+                if (score > bestEval) {
+                    bestEval = score;
+                    bestMove = move.san;
+                }
+            });
+            if (!bestMove) {
+                bestMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)].san;
+            }
+            game.move(bestMove);
+            board.position(game.fen());
+            updateStatus();
+        }
+
+        function onSnapEnd () {
+            board.position(game.fen());
+        }
+
+        function updateStatus () {
+            var status = '';
+            var moveColor = game.turn() === 'b' ? 'Preto' : 'Branco';
+            if (game.in_checkmate()) {
+                status = 'Fim de jogo, ' + (moveColor === 'Branco' ? 'Preto' : 'Branco') + ' venceu por xeque-mate!';
+                if (moveColor === 'Preto') { // Jogador (brancas) venceu
+                    var bonusEl = document.getElementById('bonus');
+                    bonusEl.classList.remove('hide');
+                    bonusEl.classList.add('show');
+                    clearTimeout(bonusEl._timeout);
+                    // Confete animado + estrelas (otimizado)
+                    var confetti = document.getElementById('confetti');
+                    confetti.innerHTML = '';
+                    for (let i = 0; i < 25; i++) {
+                        let c = document.createElement('div');
+                        if (Math.random() < 0.18) {
+                            c.className = 'star-piece';
+                            c.innerHTML = `<svg class='star-shape' viewBox='0 0 24 24'><polygon fill='#fff700' stroke='#ffd700' stroke-width='2' points='12,2 15,10 24,10 17,15 19,23 12,18 5,23 7,15 0,10 9,10'/></svg>`;
+                        } else {
+                            c.className = 'confetti-piece';
+                            c.style.background = ['#ffd700','#f7971e','#ff4e50','#43e97b','#38f9d7','#fff700','#f9d423','#fc913a','#ff6a00'][Math.floor(Math.random()*9)];
+                        }
+                        c.style.left = Math.random()*90+"%";
+                        c.style.top = Math.random()*40+20+"%";
+                        c.style.transform = `rotate(${Math.random()*360}deg)`;
+                        c.style.animation = `confetti-fall 2s cubic-bezier(.4,2,.6,1) ${Math.random()*0.7}s 1 both`;
+                        confetti.appendChild(c);
+                    }
+                    setTimeout(()=>{ confetti.innerHTML = ''; }, 2200);
+                    bonusEl._timeout = setTimeout(() => {
+                        bonusEl.classList.remove('show');
+                        bonusEl.classList.add('hide');
+                        setTimeout(() => { bonusEl.classList.remove('hide'); bonusEl.style.display = 'none'; confetti.innerHTML = ''; }, 700);
+                    }, 7000);
+                    bonusEl.style.display = 'block';
+                    // Chamar backend para somar 1000 pontos
+                    fetch('/api/register_victory', {method:'POST'})
+                        .then(r => r.json())
+                        .then(data => { if (data.ok) fetchStatus(); });
+                }
+            } else if (game.in_draw()) {
+                status = 'Empate!';
+            } else {
+                status = 'Vez de: ' + moveColor;
+                if (game.in_check()) {
+                    status += ' (xeque)';
+                }
+            }
+            statusEl.textContent = status;
+        }
+
+        window.resetGame = function() {
+            game.reset();
+            board.position('start');
+            updateStatus();
+        }
+
+        var config = {
+            draggable: true,
+            position: 'start',
+            pieceTheme: '/static/img/chesspieces/wikipedia/{piece}.png',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        };
+        board = ChessBoard('board', config);
+        fetchStatus();
+        updateStatus();
+    });
+    </script>
+    <!-- Confete animado -->
+    <style>
+        @keyframes confetti-fall { 0%{opacity:1;transform:translateY(-40px) scale(1) rotate(0deg);} 100%{opacity:0.2;transform:translateY(90px) scale(0.7) rotate(360deg);} }
+    </style>
+</body>
+</html> 
