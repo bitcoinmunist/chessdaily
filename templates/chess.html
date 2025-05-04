@@ -74,7 +74,7 @@
         .logout:active, .logout:hover {
             background: #c0392b;
         }
-        #score, #bonus-info, #timer {
+        #score, #timer {
             position: fixed;
             left: 12px;
             right: auto;
@@ -83,17 +83,30 @@
             font-size: 1rem;
             background: #fff3;
             z-index: 10;
+            width: max-content;
+            min-width: 120px;
+            box-sizing: border-box;
         }
         #score { top: 12px; }
-        #bonus-info { top: 48px; font-size: 0.95rem; }
-        #timer { top: 12px; right: 12px; left: auto; font-size: 1rem; }
+        #timer { top: 48px; }
+        #bonus-info { top: 84px; left: 12px; font-size: 0.95rem; }
         @media (max-width: 600px) {
             .board-container { padding: 4vw 1vw 2vw 1vw; }
             #board { width: 96vw; height: 96vw; min-width: 180px; min-height: 180px; }
-            .logout, #score, #bonus-info, #timer {
-                font-size: 0.98rem;
+            #score, #timer, #bonus-info {
+                position: fixed;
+                left: 8px;
+                right: auto;
+                width: 90vw;
+                min-width: 0;
+                max-width: 98vw;
+                font-size: 1rem;
                 padding: 5px 8px;
+                border-radius: 7px;
             }
+            #score { top: 8px; }
+            #timer { top: 40px; }
+            #bonus-info { top: 72px; font-size: 0.95rem; }
         }
         @keyframes fadeIn {
             0% { opacity: 0; transform: scale(0.7) translate(-50%,-50%); }
@@ -236,12 +249,14 @@
         function updateTimer(seconds) {
             if (seconds <= 0) {
                 timerEl.textContent = 'Pode jogar!';
+                timerEl.style.color = '#27ae60';
                 return;
             }
             var h = Math.floor(seconds/3600);
             var m = Math.floor((seconds%3600)/60);
             var s = seconds%60;
             timerEl.textContent = `Próxima jogada em: ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            timerEl.style.color = '#c0392b';
             setTimeout(() => { updateTimer(seconds-1); }, 1000);
         }
 
