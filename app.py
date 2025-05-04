@@ -38,11 +38,6 @@ def save_scores(scores):
     with open(SCORES_FILE, 'w') as f:
         json.dump(scores, f)
 
-# Limpar todos os pontos e contadores ao iniciar o app
-if os.path.exists(SCORES_FILE):
-    with open(SCORES_FILE, 'w') as f:
-        json.dump({}, f)
-
 @app.route('/')
 def index():
     return render_template('login.html')
