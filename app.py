@@ -145,5 +145,30 @@ def register_victory():
     save_scores(scores)
     return {'ok': True, 'score': user_data['score']}
 
+@app.route('/api/save_position', methods=['POST'])
+def save_position():
+    user = dict(session).get('user', None)
+    if not user:
+        return {'error': 'not_logged_in'}, 401
+    data = request.get_json()
+    position = data.get('position')
+    email = user.get('email')
+    scores = load_scores()
+    user_data = scores.get(email, {'score': 0, 'last_move': None, 'position': None})
+    user_data['position'] = position
+    scores[email] = user_data
+    save_scores(scores)
+    return {'ok': True}
+
+@app.route('/api/get_position')
+def get_position():
+    user = dict(session).get('user', None)
+    if not user:
+        return {'error': 'not_logged_in'}, 401
+    email = user.get('email')
+    scores = load_scores()
+    user_data = scores.get(email, {'position': None})
+    return {'position': user_data.get('position')}
+
 if __name__ == '__main__':
     app.run(debug=True) 

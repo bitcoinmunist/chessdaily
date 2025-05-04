@@ -164,6 +164,17 @@
         var scoreEl = document.getElementById('score');
         var timerEl = document.getElementById('timer');
 
+        // Carregar posição salva ao iniciar
+        fetch('/api/get_position')
+            .then(r => r.json())
+            .then(data => {
+                if (data.position) {
+                    game.load(data.position);
+                }
+                board.position(game.fen());
+                updateStatus();
+            });
+
         function fetchStatus() {
             fetch('/api/user_status').then(r => r.json()).then(data => {
                 if (data.error) return;
@@ -215,6 +226,12 @@
                 if (data.ok) {
                     fetchStatus();
                 }
+            });
+            // Salvar posição após a jogada
+            fetch('/api/save_position', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ position: game.fen() })
             });
             updateStatus();
             // IA joga com as pretas
@@ -366,6 +383,12 @@
             game.reset();
             board.position('start');
             updateStatus();
+            // Salvar posição inicial ao resetar
+            fetch('/api/save_position', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ position: game.fen() })
+            });
         }
 
         var config = {
