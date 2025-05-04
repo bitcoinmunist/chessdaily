@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jogo de Xadrez</title>
     <link rel="stylesheet" href="/static/chessboard-0.3.0.min.css" />
     <style>
@@ -15,21 +15,42 @@
             justify-content: center;
             margin: 0;
             font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 16px;
         }
         .board-container {
-            margin-top: 40px;
+            margin-top: 24px;
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 24px rgba(66,133,244,0.10), 0 1.5px 6px rgba(0,0,0,0.04);
-            padding: 24px 24px 16px 24px;
+            padding: 12px 4vw 8px 4vw;
+            max-width: 98vw;
         }
         #board {
-            width: 400px;
+            width: 90vw;
+            max-width: 400px;
+            min-width: 240px;
+            height: 90vw;
+            max-height: 400px;
+            min-height: 240px;
             margin: 0 auto;
         }
         .controls {
-            margin-top: 18px;
+            margin-top: 12px;
             text-align: center;
+        }
+        .controls button {
+            font-size: 1.1rem;
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none;
+            background: #4285F4;
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(66,133,244,0.08);
+            transition: background 0.2s;
+        }
+        .controls button:active, .controls button:hover {
+            background: #357ae8;
         }
         .status {
             margin-top: 10px;
@@ -37,9 +58,9 @@
             color: #333;
         }
         .logout {
-            position: absolute;
-            top: 20px;
-            right: 30px;
+            position: fixed;
+            top: 12px;
+            right: 12px;
             background: #e74c3c;
             color: #fff;
             border: none;
@@ -48,9 +69,31 @@
             font-size: 1rem;
             cursor: pointer;
             transition: background 0.2s;
+            z-index: 100;
         }
-        .logout:hover {
+        .logout:active, .logout:hover {
             background: #c0392b;
+        }
+        #score, #bonus-info, #timer {
+            position: fixed;
+            left: 12px;
+            right: auto;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 1rem;
+            background: #fff3;
+            z-index: 10;
+        }
+        #score { top: 12px; }
+        #bonus-info { top: 48px; font-size: 0.95rem; }
+        #timer { top: 12px; right: 12px; left: auto; font-size: 1rem; }
+        @media (max-width: 600px) {
+            .board-container { padding: 4vw 1vw 2vw 1vw; }
+            #board { width: 96vw; height: 96vw; min-width: 180px; min-height: 180px; }
+            .logout, #score, #bonus-info, #timer {
+                font-size: 0.98rem;
+                padding: 5px 8px;
+            }
         }
         @keyframes fadeIn {
             0% { opacity: 0; transform: scale(0.7) translate(-50%,-50%); }
