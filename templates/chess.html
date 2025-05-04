@@ -322,6 +322,12 @@
                 game.move(move.san);
                 board.position(game.fen());
                 updateStatus();
+                // Salvar posição após jogada da IA
+                fetch('/api/save_position', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ position: game.fen() })
+                });
                 return;
             }
             var pieceValue = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -404,6 +410,12 @@
             game.move(bestMove);
             board.position(game.fen());
             updateStatus();
+            // Salvar posição após jogada da IA
+            fetch('/api/save_position', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ position: game.fen() })
+            });
         }
 
         function onSnapEnd () {
