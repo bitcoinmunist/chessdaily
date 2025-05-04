@@ -112,7 +112,18 @@
                 max-width: 98vw;
             }
         }
-        #bonus-info { top: 72px !important; left: 12px; font-size: 0.95rem; }
+        #bonus-info {
+            top: 92px !important;
+            left: 12px;
+            font-size: 0.95rem;
+            margin-top: 18px;
+        }
+        @media (max-width: 600px) {
+            #bonus-info {
+                top: 80px !important;
+                margin-top: 10px;
+            }
+        }
         @keyframes fadeIn {
             0% { opacity: 0; transform: scale(0.7) translate(-50%,-50%); }
             60% { opacity: 1; transform: scale(1.10) translate(-50%,-50%); }
