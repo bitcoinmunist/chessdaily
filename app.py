@@ -26,6 +26,9 @@ google = oauth.register(
     }
 )
 
+# Armazenamento em memória
+user_scores = {}
+
 # Configuração do arquivo de scores
 SCORES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 SCORES_FILE = os.path.join(SCORES_DIR, 'user_scores.json')
@@ -34,17 +37,34 @@ SCORES_FILE = os.path.join(SCORES_DIR, 'user_scores.json')
 os.makedirs(SCORES_DIR, exist_ok=True)
 
 def load_scores():
-    if not os.path.exists(SCORES_FILE):
-        return {}
-    try:
-        with open(SCORES_FILE, 'r') as f:
-            return json.load(f)
-    except json.JSONDecodeError:
-        return {}
+    global user_scores
+    # Primeiro tenta carregar da memória
+    if user_scores:
+        return user_scores
+    
+    # Se não estiver na memória, tenta carregar do arquivo
+    if os.path.exists(SCORES_FILE):
+        try:
+            with open(SCORES_FILE, 'r') as f:
+                user_scores = json.load(f)
+                return user_scores
+        except json.JSONDecodeError:
+            pass
+    
+    # Se não conseguir carregar do arquivo, retorna um dicionário vazio
+    return {}
 
 def save_scores(scores):
-    with open(SCORES_FILE, 'w') as f:
-        json.dump(scores, f, indent=4)
+    global user_scores
+    user_scores = scores
+    try:
+        with open(SCORES_FILE, 'w') as f:
+            json.dump(scores, f, indent=4)
+    except Exception as e:
+        print(f"Erro ao salvar scores: {e}")
+
+# Carregar scores ao iniciar o servidor
+load_scores()
 
 @app.route('/')
 def index():
