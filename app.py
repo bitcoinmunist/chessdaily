@@ -100,7 +100,7 @@ def register_move():
         return {'error': 'not_logged_in'}, 401
     email = user.get('email')
     scores = load_scores()
-    user_data = scores.get(email, {'score': 0, 'last_move': None})
+    user_data = scores.get(email, {'score': 0, 'last_move': None, 'position': None})
     now = datetime.utcnow()
     last_move = user_data.get('last_move')
     if last_move:
