@@ -26,13 +26,21 @@ google = oauth.register(
     }
 )
 
-SCORES_FILE = 'user_scores.json'
+# Configuração do arquivo de scores
+SCORES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+SCORES_FILE = os.path.join(SCORES_DIR, 'user_scores.json')
+
+# Garantir que o diretório existe
+os.makedirs(SCORES_DIR, exist_ok=True)
 
 def load_scores():
     if not os.path.exists(SCORES_FILE):
         return {}
-    with open(SCORES_FILE, 'r') as f:
-        return json.load(f)
+    try:
+        with open(SCORES_FILE, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return {}
 
 def save_scores(scores):
     with open(SCORES_FILE, 'w') as f:
