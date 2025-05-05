@@ -36,7 +36,7 @@ def load_scores():
 
 def save_scores(scores):
     with open(SCORES_FILE, 'w') as f:
-        json.dump(scores, f)
+        json.dump(scores, f, indent=4)
 
 @app.route('/')
 def index():
