@@ -4,6 +4,8 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import json
 from datetime import datetime, timedelta
+import sqlite3
+from contextlib import closing
 
 load_dotenv()
 
@@ -26,45 +28,59 @@ google = oauth.register(
     }
 )
 
-# Armazenamento em memória
-user_scores = {}
-
-# Configuração do arquivo de scores
-SCORES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-SCORES_FILE = os.path.join(SCORES_DIR, 'user_scores.json')
+# Configuração do banco de dados
+DATABASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+DATABASE_FILE = os.path.join(DATABASE_DIR, 'chess.db')
 
 # Garantir que o diretório existe
-os.makedirs(SCORES_DIR, exist_ok=True)
+os.makedirs(DATABASE_DIR, exist_ok=True)
 
-def load_scores():
-    global user_scores
-    # Primeiro tenta carregar da memória
-    if user_scores:
-        return user_scores
-    
-    # Se não estiver na memória, tenta carregar do arquivo
-    if os.path.exists(SCORES_FILE):
-        try:
-            with open(SCORES_FILE, 'r') as f:
-                user_scores = json.load(f)
-                return user_scores
-        except json.JSONDecodeError:
-            pass
-    
-    # Se não conseguir carregar do arquivo, retorna um dicionário vazio
-    return {}
+def get_db():
+    db = sqlite3.connect(DATABASE_FILE)
+    db.row_factory = sqlite3.Row
+    return db
 
-def save_scores(scores):
-    global user_scores
-    user_scores = scores
-    try:
-        with open(SCORES_FILE, 'w') as f:
-            json.dump(scores, f, indent=4)
-    except Exception as e:
-        print(f"Erro ao salvar scores: {e}")
+def init_db():
+    with closing(get_db()) as db:
+        with app.open_resource('schema.sql', mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
 
-# Carregar scores ao iniciar o servidor
-load_scores()
+def init_app():
+    with app.app_context():
+        init_db()
+
+# Criar o arquivo schema.sql
+schema_sql = """
+CREATE TABLE IF NOT EXISTS user_scores (
+    email TEXT PRIMARY KEY,
+    score INTEGER DEFAULT 0,
+    last_move TEXT,
+    position TEXT
+);
+"""
+
+with open('schema.sql', 'w') as f:
+    f.write(schema_sql)
+
+# Inicializar o banco de dados
+init_app()
+
+def get_user_data(email):
+    with closing(get_db()) as db:
+        cursor = db.execute('SELECT * FROM user_scores WHERE email = ?', (email,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return {'email': email, 'score': 0, 'last_move': None, 'position': None}
+
+def save_user_data(email, data):
+    with closing(get_db()) as db:
+        db.execute('''
+            INSERT OR REPLACE INTO user_scores (email, score, last_move, position)
+            VALUES (?, ?, ?, ?)
+        ''', (email, data.get('score', 0), data.get('last_move'), data.get('position')))
+        db.commit()
 
 @app.route('/')
 def index():
@@ -106,8 +122,7 @@ def user_status():
     if not user:
         return {'error': 'not_logged_in'}, 401
     email = user.get('email')
-    scores = load_scores()
-    user_data = scores.get(email, {'score': 0, 'last_move': None})
+    user_data = get_user_data(email)
     now = datetime.utcnow()
     last_move = user_data.get('last_move')
     if last_move:
@@ -127,8 +142,7 @@ def register_move():
     if not user:
         return {'error': 'not_logged_in'}, 401
     email = user.get('email')
-    scores = load_scores()
-    user_data = scores.get(email, {'score': 0, 'last_move': None, 'position': None})
+    user_data = get_user_data(email)
     now = datetime.utcnow()
     last_move = user_data.get('last_move')
     if last_move:
@@ -138,8 +152,7 @@ def register_move():
     # Permite a jogada
     user_data['score'] = user_data.get('score', 0) + 1
     user_data['last_move'] = now.strftime('%Y-%m-%dT%H:%M:%S')
-    scores[email] = user_data
-    save_scores(scores)
+    save_user_data(email, user_data)
     return {'ok': True, 'score': user_data['score']}
 
 @app.route('/api/reset_test', methods=['POST'])
@@ -148,11 +161,9 @@ def reset_test():
     if not user:
         return jsonify({'error': 'Not logged in'})
     email = user.get('email')
-    scores = load_scores()
-    user_data = scores.get(email, {'score': 0, 'last_move': None})
-    user_data['last_move'] = None  # Reseta o tempo da última jogada
-    scores[email] = user_data
-    save_scores(scores)
+    user_data = get_user_data(email)
+    user_data['last_move'] = None
+    save_user_data(email, user_data)
     return jsonify({'ok': True})
 
 @app.route('/api/register_victory', methods=['POST'])
@@ -161,11 +172,9 @@ def register_victory():
     if not user:
         return {'error': 'not_logged_in'}, 401
     email = user.get('email')
-    scores = load_scores()
-    user_data = scores.get(email, {'score': 0, 'last_move': None})
+    user_data = get_user_data(email)
     user_data['score'] = user_data.get('score', 0) + 1000
-    scores[email] = user_data
-    save_scores(scores)
+    save_user_data(email, user_data)
     return {'ok': True, 'score': user_data['score']}
 
 @app.route('/api/save_position', methods=['POST'])
@@ -176,11 +185,9 @@ def save_position():
     data = request.get_json()
     position = data.get('position')
     email = user.get('email')
-    scores = load_scores()
-    user_data = scores.get(email, {'score': 0, 'last_move': None, 'position': None})
+    user_data = get_user_data(email)
     user_data['position'] = position
-    scores[email] = user_data
-    save_scores(scores)
+    save_user_data(email, user_data)
     return {'ok': True}
 
 @app.route('/api/get_position')
@@ -189,8 +196,7 @@ def get_position():
     if not user:
         return {'error': 'not_logged_in'}, 401
     email = user.get('email')
-    scores = load_scores()
-    user_data = scores.get(email, {'position': None})
+    user_data = get_user_data(email)
     return {'position': user_data.get('position')}
 
 if __name__ == '__main__':
